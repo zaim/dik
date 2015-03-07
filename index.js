@@ -1,105 +1,126 @@
-const $registry = Symbol('registry')
+"use strict";
 
-const $resolved = Symbol('resolved')
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-const $resolving = Symbol('resolving')
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
+var $registry = Symbol("registry");
+
+var $resolved = Symbol("resolved");
+
+var $resolving = Symbol("resolving");
 
 /**
  * Dik container class
  */
 
-export default class Dik {
+var Dik = (function () {
 
   /**
    * @constructor
    */
 
-  constructor () {
-    this[$registry] = {}
-    this[$resolved] = {}
-    this[$resolving] = {}
+  function Dik() {
+    _classCallCheck(this, Dik);
+
+    this[$registry] = {};
+    this[$resolved] = {};
+    this[$resolving] = {};
   }
 
+  _createClass(Dik, {
+    register: {
 
-  /**
-   * Register a resource provider
-   *
-   * @param {string} id - The unique ID to register the resource as
-   * @param {function} fn - The resource provider function
-   * @param {object=} options - Options
-   * @param {array} options.deps - Array of dependencies (resource ID strings)
-   * @returns {Dik} self
-   */
+      /**
+       * Register a resource provider
+       *
+       * @param {string} id - The unique ID to register the resource as
+       * @param {function} fn - The resource provider function
+       * @param {object=} options - Options
+       * @param {array} options.deps - Array of dependencies (resource ID strings)
+       * @returns {Dik} self
+       */
 
-  register (id, fn, options) {
-    this[$registry][id] = { fn, options }
-    return this
-  }
+      value: function register(id, fn, options) {
+        this[$registry][id] = { fn: fn, options: options };
+        return this;
+      }
+    },
+    get: {
 
+      /**
+       * Look up a registered resource and its dependencies
+       *
+       * @param {string} id - The registered resource provider's ID
+       * @returns {Promise} - A Promise for the created resource object
+       */
 
-  /**
-   * Look up a registered resource and its dependencies
-   *
-   * @param {string} id - The registered resource provider's ID
-   * @returns {Promise} - A Promise for the created resource object
-   */
+      value: function get(id, _callers) {
+        var _this = this;
 
-  get (id, _callers) {
-    if (!this[$registry][id]) {
-      return Promise.reject(new Error(`Resource ${id} not registered`))
+        if (!this[$registry][id]) {
+          return Promise.reject(new Error("Resource " + id + " not registered"));
+        }
+
+        // internal arg used to reconstruct dep chain for error msg
+        _callers = _callers || [id];
+
+        if (this[$resolving][id]) {
+          return Promise.reject(new Error("Circular dependency detected: " + _callers.join(" -> ")));
+        }
+
+        if (id in this[$resolved]) {
+          return this[$resolved][id];
+        }
+
+        this[$resolving][id] = true;
+
+        var _$registry$id = this[$registry][id];
+        var fn = _$registry$id.fn;
+        var options = _$registry$id.options;
+
+        var resolveDeps = options && options.deps ? this.resolveDependencies(options.deps, _callers) : Promise.resolve();
+
+        return resolveDeps.then(function (deps) {
+          return deps && deps.length ? fn.apply(_this, deps) : fn.call(_this);
+        }).then(function (res) {
+          delete _this[$resolving][id];
+          return _this[$resolved][id] = res;
+        });
+      }
+    },
+    resolveDependencies: {
+
+      /**
+       * Resolve a sequence of dependencies
+       *
+       * @private
+       * @param {array<string>} deps
+       * @param {array<string>} callers
+       * @returns {Promise}
+       */
+
+      value: function resolveDependencies(deps, callers) {
+        var _this = this;
+
+        var res = [];
+        var ini = Promise.resolve();
+        var seq = deps.reduce(function (acc, id) {
+          return acc.then(function () {
+            return _this.get(id, callers.concat(id));
+          }).then(function (r) {
+            return res.push(r);
+          });
+        }, ini);
+        return seq.then(function () {
+          return res;
+        });
+      }
     }
+  });
 
-    // internal arg used to reconstruct dep chain for error msg
-    _callers = _callers || [id]
+  return Dik;
+})();
 
-    if (this[$resolving][id]) {
-      return Promise.reject(
-        new Error(`Circular dependency detected: ${_callers.join(' -> ')}`)
-      )
-    }
+module.exports = Dik;
 
-    if (id in this[$resolved]) {
-      return this[$resolved][id]
-    }
-
-    this[$resolving][id] = true
-
-    const { fn, options } = this[$registry][id]
-
-    const resolveDeps = options && options.deps
-      ? this.resolveDependencies(options.deps, _callers)
-      : Promise.resolve()
-
-    return resolveDeps
-      .then((deps) => {
-        return deps && deps.length ? fn.apply(this, deps) : fn.call(this)
-      })
-      .then((res) => {
-        delete this[$resolving][id]
-        return (this[$resolved][id] = res)
-      })
-  }
-
-
-  /**
-   * Resolve a sequence of dependencies
-   *
-   * @private
-   * @param {array<string>} deps
-   * @param {array<string>} callers
-   * @returns {Promise}
-   */
-
-  resolveDependencies (deps, callers) {
-    const res = []
-    const ini = Promise.resolve()
-    const seq = deps.reduce((acc, id) => {
-      return acc
-        .then(() => this.get(id, callers.concat(id)))
-        .then((r) => res.push(r))
-    },ini)
-    return seq.then(() => res)
-  }
-
-}

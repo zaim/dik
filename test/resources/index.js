@@ -1,4 +1,4 @@
-import Dik from '../../index'
+import Dik from '../../index.es6'
 import createApp from './app'
 import createRoutes from './routes'
 

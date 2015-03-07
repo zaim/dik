@@ -2,7 +2,7 @@
 
 import debug from 'debug'
 import expect from 'expect'
-import Dik from '../index'
+import Dik from '../index.es6'
 
 debug = debug('dik')
 
