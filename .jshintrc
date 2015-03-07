@@ -1,0 +1,18 @@
+{
+  "asi": true,
+  "devel": true,
+  "eqeqeq": true,
+  "eqnull": true,
+  "esnext": true,
+  "expr": true,
+  "globalstrict": true,
+  "immed": true,
+  "indent": 2,
+  "latedef": "nofunc",
+  "laxbreak": true,
+  "noarg": true,
+  "node": true,
+  "strict": false,
+  "undef": true,
+  "unused": true
+}

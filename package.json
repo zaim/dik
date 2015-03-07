@@ -1,0 +1,26 @@
+{
+  "name": "dik",
+  "version": "0.0.1-dev",
+  "description": "A small dependency-injection container with Promises support",
+  "license": "MIT",
+  "author": {
+    "name": "Zaim Bakar"
+  },
+  "main": "index.js",
+  "scripts": {
+    "lint": "jsxhint index.js test",
+    "test": "mocha --opts ./test/mocha.opts",
+    "pretest": "npm run lint"
+  },
+  "devDependencies": {
+    "babel": "^4.7.1",
+    "debug": "^2.1.2",
+    "expect": "^1.6.0",
+    "express": "^4.12.2",
+    "jsxhint": "^0.12.1",
+    "mocha": "^2.2.0",
+    "react": "^0.12.2",
+    "react-router": "^0.12.4",
+    "supertest": "^0.15.0"
+  }
+}
