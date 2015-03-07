@@ -1,5 +1,5 @@
 # dik
-> A small dependency-injection container with `Promises` support
+> A small dependency-injection container with `Promise` support
 
 ## Installation
 
@@ -153,8 +153,8 @@ The resource provider function can return any value, including a `Promise`.
 
 Returns chainable, self, `di`.
 
-* `id: string` - The unique ID to register the resouce as
-* `fn: Function` - The resouce provider function
+* `id: string` - The unique ID to register the resource as
+* `fn: Function` - The resource provider function
 * `options: ?object` - Optional options hash, with the below properties:
   * `options.deps: array` - Array of resource ID strings this resource depends on
 
@@ -169,6 +169,18 @@ Look up a registered resource.
 Returns a `Promise` for the resource object as returned by its provider function.
 
 * `id: string` - The registered resource provider ID
+
+## Prior Art
+
+Dik was inspired by [Cation](https://github.com/sergiolepore/Cation) and
+[create-container](https://github.com/ryanflorence/create-container).
+
+`Cation` is a fully customizable DIC with Promises/async support. If you need
+custom resource providers (e.g. Factories, Services, Static), use Cation.
+
+`create-container` on the other hand is a minimal application container,
+but without Promises/async. If you don't want or need asynchronous support,
+use create-container.
 
 ## License
 
