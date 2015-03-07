@@ -172,4 +172,4 @@ Returns a `Promise` for the resource object as returned by its provider function
 
 ## License
 
-Dik is released under the MIT license.
+Dik is released under the [MIT license](./LICENSE).
