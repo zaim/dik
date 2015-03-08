@@ -45,17 +45,15 @@ export default class Dik {
    * @returns {Promise} - A Promise for the created resource object
    */
 
-  get (id, _callers) {
+  get (id, _caller) {
     if (!this[$registry][id]) {
       return Promise.reject(new Error(`Resource ${id} not registered`))
     }
 
-    // internal arg used to reconstruct dep chain for error msg
-    _callers = _callers || [id]
-
     if (this[$resolving][id]) {
+      _caller = _caller || '?'
       return Promise.reject(
-        new Error(`Circular dependency detected: ${_callers.join(' -> ')}`)
+        new Error(`Circular dependency detected: ${_caller} -> ${id}`)
       )
     }
 
@@ -68,7 +66,7 @@ export default class Dik {
     const { fn, options } = this[$registry][id]
 
     const resolveDeps = options && options.deps
-      ? this.resolveDependencies(options.deps, _callers)
+      ? this.resolveDependencies(options.deps, id)
       : Promise.resolve()
 
     return resolveDeps
@@ -87,16 +85,16 @@ export default class Dik {
    *
    * @private
    * @param {array<string>} deps
-   * @param {array<string>} callers
+   * @param {string} caller
    * @returns {Promise}
    */
 
-  resolveDependencies (deps, callers) {
+  resolveDependencies (deps, caller) {
     const res = []
     const ini = Promise.resolve()
     const seq = deps.reduce((acc, id) => {
       return acc
-        .then(() => this.get(id, callers.concat(id)))
+        .then(() => this.get(id, caller))
         .then((r) => res.push(r))
     },ini)
     return seq.then(() => res)

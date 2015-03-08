@@ -55,18 +55,16 @@ var Dik = (function () {
        * @returns {Promise} - A Promise for the created resource object
        */
 
-      value: function get(id, _callers) {
+      value: function get(id, _caller) {
         var _this = this;
 
         if (!this[$registry][id]) {
           return Promise.reject(new Error("Resource " + id + " not registered"));
         }
 
-        // internal arg used to reconstruct dep chain for error msg
-        _callers = _callers || [id];
-
         if (this[$resolving][id]) {
-          return Promise.reject(new Error("Circular dependency detected: " + _callers.join(" -> ")));
+          _caller = _caller || "?";
+          return Promise.reject(new Error("Circular dependency detected: " + _caller + " -> " + id));
         }
 
         if (id in this[$resolved]) {
@@ -79,7 +77,7 @@ var Dik = (function () {
         var fn = _$registry$id.fn;
         var options = _$registry$id.options;
 
-        var resolveDeps = options && options.deps ? this.resolveDependencies(options.deps, _callers) : Promise.resolve();
+        var resolveDeps = options && options.deps ? this.resolveDependencies(options.deps, id) : Promise.resolve();
 
         return resolveDeps.then(function (deps) {
           return deps && deps.length ? fn.apply(_this, deps) : fn.call(_this);
@@ -96,18 +94,18 @@ var Dik = (function () {
        *
        * @private
        * @param {array<string>} deps
-       * @param {array<string>} callers
+       * @param {string} caller
        * @returns {Promise}
        */
 
-      value: function resolveDependencies(deps, callers) {
+      value: function resolveDependencies(deps, caller) {
         var _this = this;
 
         var res = [];
         var ini = Promise.resolve();
         var seq = deps.reduce(function (acc, id) {
           return acc.then(function () {
-            return _this.get(id, callers.concat(id));
+            return _this.get(id, caller);
           }).then(function (r) {
             return res.push(r);
           });

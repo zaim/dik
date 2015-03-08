@@ -60,9 +60,9 @@ describe('dik', function () {
         done(new Error('"foo" should not resolve'))
       }).catch((e) => {
         debug(e)
-        expect(e.toString()).toMatch(/foo|bar|baz/)
+        expect(e.toString()).toMatch(/foo/)
         done()
-      })
+      }).catch(done)
     })
 
 
@@ -77,9 +77,9 @@ describe('dik', function () {
         done(new Error('"foo" should not resolve'))
       }).catch((e) => {
         debug(e)
-        expect(e.toString()).toMatch(/foo|bar|baz/)
+        expect(e.toString()).toMatch(/foo/)
         done()
-      })
+      }).catch(done)
     })
 
 
@@ -164,9 +164,9 @@ describe('dik', function () {
           done(new Error('"foo" should not resolve'))
         }).catch((e) => {
           debug(e)
-          expect(e.toString()).toMatch(/foo|bar|baz/)
+          expect(e.toString()).toMatch(/foo/)
           done()
-        })
+        }).catch(done)
       })
 
 
@@ -187,9 +187,9 @@ describe('dik', function () {
           done(new Error('"foo" should not resolve'))
         }).catch((e) => {
           debug(e)
-          expect(e.toString()).toMatch(/foo|bar|baz/)
+          expect(e.toString()).toMatch(/foo/)
           done()
-        })
+        }).catch(done)
       })
 
 
