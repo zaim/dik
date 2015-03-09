@@ -93,7 +93,7 @@ describe('dik', function () {
     })
 
 
-    it('should be called with resolved dependencies', function (done) {
+    it('should pass resolved dependencies', function (done) {
       const foo = function (bar, baz, qux) {
         debug(arguments)
         expect(bar).toBe('BAR')
@@ -102,6 +102,25 @@ describe('dik', function () {
         return ['FOO', bar, baz, qux].join(':')
       }
       dik.register('foo', foo, { deps: ['bar', 'baz', 'qux'] })
+      dik.register('bar', () => 'BAR')
+      dik.register('baz', () => 'BAZ')
+      dik.register('qux', () => 'QUX')
+      dik.get('foo').then((r) => {
+        expect(r).toBe('FOO:BAR:BAZ:QUX')
+        done()
+      }).catch(done)
+    })
+
+
+    it('should pass resolved dependencies passed as array', function (done) {
+      const foo = function (bar, baz, qux) {
+        debug(arguments)
+        expect(bar).toBe('BAR')
+        expect(baz).toBe('BAZ')
+        expect(qux).toBe('QUX')
+        return ['FOO', bar, baz, qux].join(':')
+      }
+      dik.register('foo', foo, ['bar', 'baz', 'qux'])
       dik.register('bar', () => 'BAR')
       dik.register('baz', () => 'BAZ')
       dik.register('qux', () => 'QUX')

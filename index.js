@@ -32,10 +32,18 @@ var Dik = (function () {
       /**
        * Register a resource provider
        *
+       * The `options` argument can be an options object,
+       * which can have a `deps` property which is an
+       * array of resource provider ID strings that this
+       * resource is dependant upon.
+       *
+       * As a shortcut, the array of ID strings can also be
+       * passed directly as the `options` argument.
+       *
        * @alias Dik#register
        * @param {string} id The unique ID to register the resource as
        * @param {function} fn The resource provider function
-       * @param {object=} options Options
+       * @param {object=} options Options object or array of dependency IDs
        * @returns {Dik} self
        *
        * @example
@@ -51,15 +59,21 @@ var Dik = (function () {
        *   })
        * })
        *
-       * // Specify dependencies.
+       * // Specify dependencies in options object.
        * dik.register('baz', function (bar) {
        *   return 'BAZ -> ' + bar
-       * }, {
-       *   deps: ['bar']
-       * })
+       * }, { deps: ['bar'] })
+       *
+       * // Specify dependencies in directly.
+       * dik.register('baz', function (bar) {
+       *   return 'BAZ -> ' + bar
+       * }, ['bar'])
        */
 
       value: function register(id, fn, options) {
+        if (Array.isArray(options)) {
+          options = { deps: options };
+        }
         this[$registry][id] = { fn: fn, options: options };
         return this;
       }
@@ -70,8 +84,8 @@ var Dik = (function () {
        * Look up a registered resource and its dependencies
        *
        * @alias Dik#get
-       * @param {string} id - The registered resource provider's ID
-       * @returns {Promise} - A Promise for the created resource object
+       * @param {string} id The registered resource provider's ID
+       * @returns {Promise} A Promise for the created resource object
        *
        * @example
        * dik.get('baz').then((res) => {

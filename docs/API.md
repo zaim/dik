@@ -16,14 +16,22 @@ const dik = new Dik()
 
 Register a resource provider
 
+The `options` argument can be an options object,
+which can have a `deps` property which is an
+array of resource provider ID strings that this
+resource is dependant upon.
+
+As a shortcut, the array of ID strings can also be
+passed directly as the `options` argument.
+
 
 ### Parameters
 
-| parameter | type     | description                               |
-| --------- | -------- | ----------------------------------------- |
-| `id`      | string   | The unique ID to register the resource as |
-| `fn`      | function | The resource provider function            |
-| `options` | object   | _optional:_ Options                       |
+| parameter | type     | description                                           |
+| --------- | -------- | ----------------------------------------------------- |
+| `id`      | string   | The unique ID to register the resource as             |
+| `fn`      | function | The resource provider function                        |
+| `options` | object   | _optional:_ Options object or array of dependency IDs |
 
 
 ### Example
@@ -41,12 +49,15 @@ dik.register('bar', function () {
   })
 })
 
-// Specify dependencies.
+// Specify dependencies in options object.
 dik.register('baz', function (bar) {
   return 'BAZ -> ' + bar
-}, {
-  deps: ['bar']
-})
+}, { deps: ['bar'] })
+
+// Specify dependencies in directly.
+dik.register('baz', function (bar) {
+  return 'BAZ -> ' + bar
+}, ['bar'])
 ```
 
 
@@ -60,9 +71,9 @@ Look up a registered resource and its dependencies
 
 ### Parameters
 
-| parameter | type   | description                             |
-| --------- | ------ | --------------------------------------- |
-| `id`      | string | - The registered resource provider's ID |
+| parameter | type   | description                           |
+| --------- | ------ | ------------------------------------- |
+| `id`      | string | The registered resource provider's ID |
 
 
 ### Example
@@ -74,6 +85,6 @@ dik.get('baz').then((res) => {
 ```
 
 
-**Returns** `Promise`, - A Promise for the created resource object 
+**Returns** `Promise`, A Promise for the created resource object 
 
 
