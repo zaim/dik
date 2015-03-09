@@ -6,14 +6,13 @@ const $resolving = Symbol('resolving')
 
 
 /**
- * Dik container class
+ * The Dik container class.
+ *
+ * @example
+ * const dik = new Dik()
  */
 
 export default class Dik {
-
-  /**
-   * @constructor
-   */
 
   constructor () {
     this[$registry] = {}
@@ -25,11 +24,31 @@ export default class Dik {
   /**
    * Register a resource provider
    *
-   * @param {string} id - The unique ID to register the resource as
-   * @param {function} fn - The resource provider function
-   * @param {object=} options - Options
-   * @param {array} options.deps - Array of dependencies (resource ID strings)
+   * @alias Dik#register
+   * @param {string} id The unique ID to register the resource as
+   * @param {function} fn The resource provider function
+   * @param {object=} options Options
    * @returns {Dik} self
+   *
+   * @example
+   * // Simple resource provider.
+   * dik.register('foo', function () {
+   *   return 'FOO'
+   * })
+   *
+   * // Lookup other resources.
+   * dik.register('bar', function () {
+   *   return this.get('foo').then((foo) => {
+   *     return 'BAR -> ' + foo
+   *   })
+   * })
+   *
+   * // Specify dependencies.
+   * dik.register('baz', function (bar) {
+   *   return 'BAZ -> ' + bar
+   * }, {
+   *   deps: ['bar']
+   * })
    */
 
   register (id, fn, options) {
@@ -41,8 +60,14 @@ export default class Dik {
   /**
    * Look up a registered resource and its dependencies
    *
-   * @param {string} id - The registered resource provider's ID
-   * @returns {Promise} - A Promise for the created resource object
+   * @alias Dik#get
+   * @param {string} id The registered resource provider's ID
+   * @returns {Promise} A Promise for the created resource object
+   *
+   * @example
+   * dik.get('baz').then((res) => {
+   *   expect(res).toEqual('BAZ -> BAR -> FOO')
+   * })
    */
 
   get (id, _caller) {
@@ -83,7 +108,8 @@ export default class Dik {
   /**
    * Resolve a sequence of dependencies
    *
-   * @private
+   * @access private
+   * @alias Dik#resolveDependencies
    * @param {array<string>} deps
    * @param {string} caller
    * @returns {Promise}

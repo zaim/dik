@@ -16,7 +16,9 @@
     "test": "mocha --opts ./test/mocha.opts",
     "pretest": "npm run lint",
     "compile": "babel index.es6.js > index.js",
-    "prepublish": "npm run compile"
+    "prepublish": "npm run compile",
+    "docs": "bash docs/build.sh",
+    "predocs": "npm run compile"
   },
   "devDependencies": {
     "babel": "^4.7.1",
