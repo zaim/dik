@@ -9,6 +9,9 @@
 $ npm install --save dik
 ```
 
+Dik requires an ES5-compatible environment *and* a native (globally available)
+`Promise`. It is recommended to use [babel](http://babeljs.io).
+
 
 ## Example
 
