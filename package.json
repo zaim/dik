@@ -1,6 +1,6 @@
 {
   "name": "dik",
-  "version": "0.0.1-dev",
+  "version": "0.0.1",
   "description": "A small dependency-injection container with Promises support",
   "license": "MIT",
   "author": {
