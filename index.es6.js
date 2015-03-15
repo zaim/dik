@@ -97,7 +97,7 @@ export default class Dik {
     }
 
     if (id in this[$resolved]) {
-      return this[$resolved][id]
+      return Promise.resolve(this[$resolved][id])
     }
 
     this[$resolving][id] = true

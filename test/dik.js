@@ -131,6 +131,19 @@ describe('dik', function () {
     })
 
 
+    it('should return cached resource', function (done) {
+      let count = 0
+      const foo = function () { count += 1; return 'FOO'; }
+      dik.register('foo', foo)
+      dik.get('foo').then(() => {
+        return dik.get('foo').then(() => {
+          expect(count).toEqual(1)
+          done();
+        })
+      }).catch(done);
+    })
+
+
     it('should cache dependencies', function (done) {
       let count = 0
       const foo = function () { count += 1 }
