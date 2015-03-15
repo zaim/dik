@@ -24,6 +24,11 @@ resource is dependant upon.
 As a shortcut, the array of ID strings can also be
 passed directly as the `options` argument.
 
+A special resource id `$get` can be specified to
+get access to the `Dik#get` method in the resource
+provider function in order to look-up other resources
+(see example below)
+
 
 ### Parameters
 
@@ -37,27 +42,27 @@ passed directly as the `options` argument.
 ### Example
 
 ```js
-// Simple resource provider.
+// Simple resource provider:
 dik.register('foo', function () {
   return 'FOO'
 })
 
-// Lookup other resources.
-dik.register('bar', function () {
-  return this.get('foo').then((foo) => {
-    return 'BAR -> ' + foo
+// Specify dependencies in options object:
+dik.register('bar', function (baz) {
+  return 'BAR -> ' + baz
+}, { deps: ['baz'] })
+
+// Specify dependencies in directly:
+dik.register('bar', function (baz) {
+  return 'BAR -> ' + baz
+}, ['baz'])
+
+// Lookup other resources:
+dik.register('baz', function ($get) {
+  return $get('foo').then((foo) => {
+    return 'BAZ -> ' + foo
   })
-})
-
-// Specify dependencies in options object.
-dik.register('baz', function (bar) {
-  return 'BAZ -> ' + bar
-}, { deps: ['bar'] })
-
-// Specify dependencies in directly.
-dik.register('baz', function (bar) {
-  return 'BAZ -> ' + bar
-}, ['bar'])
+}, [$get'])
 ```
 
 
@@ -79,8 +84,8 @@ Look up a registered resource and its dependencies
 ### Example
 
 ```js
-dik.get('baz').then((res) => {
-  expect(res).toEqual('BAZ -> BAR -> FOO')
+dik.get('bar').then((res) => {
+  expect(res).toEqual('BAR -> BAZ -> FOO')
 })
 ```
 

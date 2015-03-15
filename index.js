@@ -1,5 +1,7 @@
 "use strict";
 
+var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
+
 var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
@@ -19,11 +21,17 @@ var $resolving = Symbol("resolving");
 
 var Dik = (function () {
   function Dik() {
+    var _this = this;
+
     _classCallCheck(this, Dik);
 
     this[$registry] = {};
-    this[$resolved] = {};
     this[$resolving] = {};
+    this[$resolved] = {
+      $get: function (id) {
+        return _this.get(id);
+      }
+    };
   }
 
   _createClass(Dik, {
@@ -40,6 +48,11 @@ var Dik = (function () {
        * As a shortcut, the array of ID strings can also be
        * passed directly as the `options` argument.
        *
+       * A special resource id `$get` can be specified to
+       * get access to the `Dik#get` method in the resource
+       * provider function in order to look-up other resources
+       * (see example below)
+       *
        * @alias Dik#register
        * @param {string} id The unique ID to register the resource as
        * @param {function} fn The resource provider function
@@ -47,27 +60,27 @@ var Dik = (function () {
        * @returns {Dik} self
        *
        * @example
-       * // Simple resource provider.
+       * // Simple resource provider:
        * dik.register('foo', function () {
        *   return 'FOO'
        * })
        *
-       * // Lookup other resources.
-       * dik.register('bar', function () {
-       *   return this.get('foo').then((foo) => {
-       *     return 'BAR -> ' + foo
+       * // Specify dependencies in options object:
+       * dik.register('bar', function (baz) {
+       *   return 'BAR -> ' + baz
+       * }, { deps: ['baz'] })
+       *
+       * // Specify dependencies in directly:
+       * dik.register('bar', function (baz) {
+       *   return 'BAR -> ' + baz
+       * }, ['baz'])
+       *
+       * // Lookup other resources:
+       * dik.register('baz', function ($get) {
+       *   return $get('foo').then((foo) => {
+       *     return 'BAZ -> ' + foo
        *   })
-       * })
-       *
-       * // Specify dependencies in options object.
-       * dik.register('baz', function (bar) {
-       *   return 'BAZ -> ' + bar
-       * }, { deps: ['bar'] })
-       *
-       * // Specify dependencies in directly.
-       * dik.register('baz', function (bar) {
-       *   return 'BAZ -> ' + bar
-       * }, ['bar'])
+       * }, [$get'])
        */
 
       value: function register(id, fn, options) {
@@ -91,13 +104,17 @@ var Dik = (function () {
        * @returns {Promise} A Promise for the created resource object
        *
        * @example
-       * dik.get('baz').then((res) => {
-       *   expect(res).toEqual('BAZ -> BAR -> FOO')
+       * dik.get('bar').then((res) => {
+       *   expect(res).toEqual('BAR -> BAZ -> FOO')
        * })
        */
 
       value: function get(id, _caller) {
         var _this = this;
+
+        if (id in this[$resolved]) {
+          return Promise.resolve(this[$resolved][id]);
+        }
 
         if (!this[$registry][id]) {
           return Promise.reject(new Error("Resource " + id + " not registered"));
@@ -106,10 +123,6 @@ var Dik = (function () {
         if (this[$resolving][id]) {
           _caller = _caller || "?";
           return Promise.reject(new Error("Circular dependency detected: " + _caller + " -> " + id));
-        }
-
-        if (id in this[$resolved]) {
-          return Promise.resolve(this[$resolved][id]);
         }
 
         this[$resolving][id] = true;
@@ -121,7 +134,7 @@ var Dik = (function () {
         var resolveDeps = options && options.deps ? this.resolveDependencies(options.deps, id) : Promise.resolve();
 
         return resolveDeps.then(function (deps) {
-          return deps && deps.length ? fn.apply(_this, deps) : fn.call(_this);
+          return deps ? fn.apply(undefined, _toConsumableArray(deps)) : fn();
         }).then(function (res) {
           delete _this[$resolving][id];
           return _this[$resolved][id] = res;

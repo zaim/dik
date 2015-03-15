@@ -14,8 +14,8 @@ function createHandler (routes) {
 }
 
 
-function createApp () {
-  return this.get('routes').then(createHandler)
+function createApp (get) {
+  return get('routes').then(createHandler)
 }
 
 

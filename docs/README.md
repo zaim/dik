@@ -38,7 +38,7 @@ import createApp from './app'
 import createRoutes from './routes'
 
 const di = new Dik()
-  .register('app', createApp)
+  .register('app', createApp, ['$get'])
   .register('routes', createRoutes)
 
 export default di
@@ -51,8 +51,8 @@ import express from 'express'
 import React from 'react'
 import Router from 'react-router'
 
-function createApp () {
-  return this.get('routes').then(createHandler)
+function createApp ($get) {
+  return $get('routes').then(createHandler)
 }
 
 function createHandler (routes) {

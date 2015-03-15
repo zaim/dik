@@ -16,8 +16,10 @@ export default class Dik {
 
   constructor () {
     this[$registry] = {}
-    this[$resolved] = {}
     this[$resolving] = {}
+    this[$resolved] = {
+      $get: (id) => this.get(id)
+    }
   }
 
 
@@ -32,6 +34,11 @@ export default class Dik {
    * As a shortcut, the array of ID strings can also be
    * passed directly as the `options` argument.
    *
+   * A special resource id `$get` can be specified to
+   * get access to the `Dik#get` method in the resource
+   * provider function in order to look-up other resources
+   * (see example below)
+   *
    * @alias Dik#register
    * @param {string} id The unique ID to register the resource as
    * @param {function} fn The resource provider function
@@ -39,27 +46,27 @@ export default class Dik {
    * @returns {Dik} self
    *
    * @example
-   * // Simple resource provider.
+   * // Simple resource provider:
    * dik.register('foo', function () {
    *   return 'FOO'
    * })
    *
-   * // Lookup other resources.
-   * dik.register('bar', function () {
-   *   return this.get('foo').then((foo) => {
-   *     return 'BAR -> ' + foo
+   * // Specify dependencies in options object:
+   * dik.register('bar', function (baz) {
+   *   return 'BAR -> ' + baz
+   * }, { deps: ['baz'] })
+   *
+   * // Specify dependencies in directly:
+   * dik.register('bar', function (baz) {
+   *   return 'BAR -> ' + baz
+   * }, ['baz'])
+   *
+   * // Lookup other resources:
+   * dik.register('baz', function ($get) {
+   *   return $get('foo').then((foo) => {
+   *     return 'BAZ -> ' + foo
    *   })
-   * })
-   *
-   * // Specify dependencies in options object.
-   * dik.register('baz', function (bar) {
-   *   return 'BAZ -> ' + bar
-   * }, { deps: ['bar'] })
-   *
-   * // Specify dependencies in directly.
-   * dik.register('baz', function (bar) {
-   *   return 'BAZ -> ' + bar
-   * }, ['bar'])
+   * }, [$get'])
    */
 
   register (id, fn, options) {
@@ -82,12 +89,16 @@ export default class Dik {
    * @returns {Promise} A Promise for the created resource object
    *
    * @example
-   * dik.get('baz').then((res) => {
-   *   expect(res).toEqual('BAZ -> BAR -> FOO')
+   * dik.get('bar').then((res) => {
+   *   expect(res).toEqual('BAR -> BAZ -> FOO')
    * })
    */
 
   get (id, _caller) {
+    if (id in this[$resolved]) {
+      return Promise.resolve(this[$resolved][id])
+    }
+
     if (!this[$registry][id]) {
       return Promise.reject(new Error(`Resource ${id} not registered`))
     }
@@ -97,10 +108,6 @@ export default class Dik {
       return Promise.reject(
         new Error(`Circular dependency detected: ${_caller} -> ${id}`)
       )
-    }
-
-    if (id in this[$resolved]) {
-      return Promise.resolve(this[$resolved][id])
     }
 
     this[$resolving][id] = true
@@ -113,7 +120,7 @@ export default class Dik {
 
     return resolveDeps
       .then((deps) => {
-        return deps && deps.length ? fn.apply(this, deps) : fn.call(this)
+        return deps ? fn(...deps) : fn()
       })
       .then((res) => {
         delete this[$resolving][id]

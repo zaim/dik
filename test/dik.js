@@ -56,12 +56,12 @@ describe('dik', function () {
     it('should throw if circular lookup is detected', function (done) {
       const foo = function () {}
       const bar = function () {}
-      const baz = function () {
-        return this.get('foo')
+      const baz = function (get) {
+        return get('foo')
       }
       dik.register('foo', foo, { deps: ['bar'] })
       dik.register('bar', bar, { deps: ['baz'] })
-      dik.register('baz', baz)
+      dik.register('baz', baz, { deps: ['$get'] })
       dik.get('foo').then(() => {
         done(new Error('"foo" should not resolve'))
       }).catch((e) => {
@@ -89,13 +89,22 @@ describe('dik', function () {
     })
 
 
-    it('should be called with the container as context', function (done) {
-      const foo = function () {
-        expect(this).toBe(dik)
-        done()
+    it('should resolve special "$get" resource', function (done) {
+      const foo = function (get) {
+        expect(get).toBeA(Function)
+        return 'FOO'
       }
-      dik.register('foo', foo)
-      dik.get('foo')
+      const bar = function (get) {
+        expect(get).toBeA(Function)
+        get('foo').then((f) => {
+          expect(f).toEqual('FOO')
+        })
+      }
+      dik.register('foo', foo, { deps: ['$get'] })
+      dik.register('bar', bar, ['$get'])
+      dik.get('foo').then(() => {
+        return dik.get('bar').then(done)
+      }).catch(done)
     })
 
 
@@ -190,14 +199,14 @@ describe('dik', function () {
         const bar = function () {
           return new Promise((resolve) => setTimeout(resolve, 4))
         }
-        const baz = function () {
+        const baz = function (get) {
           return new Promise((resolve, reject) => setTimeout(() => {
-            this.get('foo').then(resolve, reject)
+            get('foo').then(resolve, reject)
           }, 8))
         }
         dik.register('foo', foo, { deps: ['bar'] })
         dik.register('bar', bar, { deps: ['baz'] })
-        dik.register('baz', baz)
+        dik.register('baz', baz, { deps: ['$get'] })
         dik.get('foo').then(() => {
           done(new Error('"foo" should not resolve'))
         }).catch((e) => {
@@ -250,8 +259,8 @@ describe('dik', function () {
         const qux = function () {
           return 'QUX'
         }
-        const coq = function () {
-          return this.get('qux').then((Qux) => {
+        const coq = function (get) {
+          return get('qux').then((Qux) => {
             return Qux + ':COQ'
           })
         }
@@ -259,7 +268,7 @@ describe('dik', function () {
         dik.register('bar', bar)
         dik.register('baz', baz)
         dik.register('qux', qux)
-        dik.register('coq', coq)
+        dik.register('coq', coq, { deps: ['$get'] })
         dik.get('foo').then((r) => {
           expect(r).toBe('FOO:BAR:BAZ:QUX:COQ')
           done()
@@ -292,14 +301,14 @@ describe('dik', function () {
           quxCount += 1
           return 'QUX'
         }
-        const coq = function () {
-          return this.get('qux')
+        const coq = function (get) {
+          return get('qux')
         }
         dik.register('foo', foo)
         dik.register('bar', bar, { deps: ['foo'] })
         dik.register('baz', baz, { deps: ['bar'] })
         dik.register('qux', qux, { deps: ['baz'] })
-        dik.register('coq', coq)
+        dik.register('coq', coq, { deps: ['$get'] })
         dik.get('foo').then(() => {
           return dik.get('bar').then(() => {
             return dik.get('baz').then(() => {
