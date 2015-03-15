@@ -13,13 +13,16 @@
   },
   "scripts": {
     "lint": "jsxhint index.es6.js test",
-    "test": "mocha --opts ./test/mocha.opts",
-    "test-karma": "karma start",
+    "test": "mocha --compilers js:babel/register",
     "pretest": "npm run lint",
+    "test-cov": "babel-node node_modules/.bin/isparta cover _mocha -- -R dot",
+    "pretest-cov": "npm run lint",
+    "test-karma": "karma start",
+    "pretest-karma": "npm run lint",
     "compile": "babel index.es6.js > index.js",
-    "prepublish": "npm run compile",
     "docs": "bash docs/build.sh",
-    "predocs": "npm run compile"
+    "predocs": "npm run compile",
+    "prepublish": "npm run docs && babel-node test/utils/checkrepo.js"
   },
   "devDependencies": {
     "babel": "^4.7.1",
@@ -29,6 +32,7 @@
     "doxme": "^1.8.2",
     "expect": "^1.6.0",
     "express": "^4.12.2",
+    "isparta": "^2.2.0",
     "jsxhint": "^0.12.1",
     "karma": "^0.12.31",
     "karma-browserify": "^4.0.0",

@@ -1,2 +1,1 @@
 --async-only
---compilers js:babel/register
