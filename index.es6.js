@@ -63,6 +63,9 @@ export default class Dik {
    */
 
   register (id, fn, options) {
+    if (this[$registry][id]) {
+      throw new Error(`Resource ${id} already registered`)
+    }
     if (Array.isArray(options)) {
       options = { deps: options }
     }

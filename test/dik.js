@@ -24,6 +24,12 @@ describe('dik', function () {
       done()
     })
 
+    it('should throw error when id already exist', function (done) {
+      dik.register('foo', () => 'FOO')
+      expect(() => dik.register('foo', () => 'FOO2')).toThrow(/foo/)
+      done()
+    })
+
   })
 
 
