@@ -178,6 +178,42 @@ describe('dik', function () {
     })
 
 
+    it('should not cache resource if factory=true', function (done) {
+      let count = 0
+      const foo = function () { count += 1; return 'FOO'; }
+      dik.register('foo', foo, { factory: true })
+      dik.get('foo').then(() => {
+        return dik.get('foo').then(() => {
+          return dik.get('foo').then(() => {
+            expect(count).toEqual(3)
+            done();
+          })
+        })
+      }).catch(done);
+    })
+
+
+    it('should not cache dependencies if factory=true', function (done) {
+      let count = 0
+      const foo = function () { count += 1 }
+      const bar = function () {}
+      const baz = function () {}
+      dik.register('foo', foo, { factory: true })
+      dik.register('bar', bar, { deps: ['foo'] })
+      dik.register('baz', baz, { deps: ['bar'] })
+      dik.get('foo').then(() => {
+        return dik.get('bar').then(() => {
+          return dik.get('baz').then(() => {
+            return dik.get('foo').then(() => {
+              expect(count).toEqual(3)
+              done()
+            })
+          })
+        })
+      }).catch(done)
+    })
+
+
     describe('with Promises', function () {
 
       it('should throw if resource not registered', function (done) {
@@ -316,6 +352,55 @@ describe('dik', function () {
                 return dik.get('coq').then(() => {
                   expect(fooCount).toEqual(1)
                   expect(quxCount).toEqual(1)
+                  done()
+                })
+              })
+            })
+          })
+        }).catch(done)
+      })
+
+
+      it('should not cache dependencies if factory=true', function (done) {
+        let fooCount = 0
+        let quxCount = 0
+        const foo = function () {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              fooCount += 1
+              resolve()
+            }, 8)
+          })
+        }
+        const bar = function () {
+          return new Promise((resolve) => {
+            setTimeout(resolve, 4)
+          })
+        }
+        const baz = function () {
+          return new Promise((resolve) => {
+            setTimeout(resolve, 2)
+          })
+        }
+        const qux = function () {
+          quxCount += 1
+          return 'QUX'
+        }
+        const coq = function (get) {
+          return get('qux')
+        }
+        dik.register('foo', foo, { factory: true })
+        dik.register('bar', bar, { deps: ['foo'] })
+        dik.register('baz', baz, { deps: ['bar'] })
+        dik.register('qux', qux, { deps: ['baz'], factory: true })
+        dik.register('coq', coq, { deps: ['$get'] })
+        dik.get('foo').then(() => {
+          return dik.get('bar').then(() => {
+            return dik.get('baz').then(() => {
+              return dik.get('qux').then(() => {
+                return dik.get('coq').then(() => {
+                  expect(fooCount).toEqual(2)
+                  expect(quxCount).toEqual(2)
                   done()
                 })
               })

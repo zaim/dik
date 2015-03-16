@@ -155,9 +155,14 @@ const dik = new Dik()
 Register a resource provider
 
 The `options` argument can be an options object,
-which can have a `deps` property which is an
-array of resource provider ID strings that this
-resource is dependant upon.
+which may have these properties:
+
+* `deps` - array of resource provider ID strings
+  that this resource is dependent upon.
+
+* `factory` - boolean, if true the resource will
+  not be cached and a new instance is returned on
+  every `get` call.
 
 As a shortcut, the array of ID strings can also be
 passed directly as the `options` argument.

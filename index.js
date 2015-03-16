@@ -41,9 +41,14 @@ var Dik = (function () {
        * Register a resource provider
        *
        * The `options` argument can be an options object,
-       * which can have a `deps` property which is an
-       * array of resource provider ID strings that this
-       * resource is dependant upon.
+       * which may have these properties:
+       *
+       * * `deps` - array of resource provider ID strings
+       *   that this resource is dependent upon.
+       *
+       * * `factory` - boolean, if true the resource will
+       *   not be cached and a new instance is returned on
+       *   every `get` call.
        *
        * As a shortcut, the array of ID strings can also be
        * passed directly as the `options` argument.
@@ -131,13 +136,16 @@ var Dik = (function () {
         var fn = _$registry$id.fn;
         var options = _$registry$id.options;
 
-        var resolveDeps = options && options.deps ? this.resolveDependencies(options.deps, id) : Promise.resolve();
+        var deps = options && options.deps;
+        var fact = options && options.factory;
+
+        var resolveDeps = deps ? this.resolveDependencies(deps, id) : Promise.resolve();
 
         return resolveDeps.then(function (deps) {
           return deps ? fn.apply(undefined, _toConsumableArray(deps)) : fn();
         }).then(function (res) {
           delete _this[$resolving][id];
-          return _this[$resolved][id] = res;
+          return fact ? res : _this[$resolved][id] = res;
         });
       }
     },

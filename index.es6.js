@@ -27,9 +27,14 @@ export default class Dik {
    * Register a resource provider
    *
    * The `options` argument can be an options object,
-   * which can have a `deps` property which is an
-   * array of resource provider ID strings that this
-   * resource is dependant upon.
+   * which may have these properties:
+   *
+   * * `deps` - array of resource provider ID strings
+   *   that this resource is dependent upon.
+   *
+   * * `factory` - boolean, if true the resource will
+   *   not be cached and a new instance is returned on
+   *   every `get` call.
    *
    * As a shortcut, the array of ID strings can also be
    * passed directly as the `options` argument.
@@ -113,9 +118,11 @@ export default class Dik {
     this[$resolving][id] = true
 
     const { fn, options } = this[$registry][id]
+    const deps = options && options.deps
+    const fact = options && options.factory
 
-    const resolveDeps = options && options.deps
-      ? this.resolveDependencies(options.deps, id)
+    const resolveDeps = deps
+      ? this.resolveDependencies(deps, id)
       : Promise.resolve()
 
     return resolveDeps
@@ -124,7 +131,7 @@ export default class Dik {
       })
       .then((res) => {
         delete this[$resolving][id]
-        return (this[$resolved][id] = res)
+        return fact ? res : (this[$resolved][id] = res)
       })
   }
 
